@@ -5,9 +5,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ProfileFragment">
-    android:src="@android:drawable/ic_menu_mylocation"
-    android:src="@android:drawable/ic_delete"
+    tools:context=".ProfileFragment"
+    >
 
     <!-- Поле для редактирования имени -->
     <EditText
