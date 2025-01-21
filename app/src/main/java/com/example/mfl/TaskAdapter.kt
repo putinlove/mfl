@@ -7,14 +7,13 @@ import com.example.mfl.R
 import com.example.mfl.model.Task
 
 class TaskAdapter(
-    private val tasks: MutableList<Task>, // Сделаем список изменяемым
+    private val tasks: MutableList<Task>, // Список задач
     private val onTaskClick: (Task) -> Unit // Lambda-функция для обработки кликов
 ) : RecyclerView.Adapter<TaskAdapter.TaskViewHolder>() {
 
     inner class TaskViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val taskTitle: TextView = itemView.findViewById(R.id.task_title)
         val taskDescription: TextView = itemView.findViewById(R.id.task_description)
-        val taskStatus: TextView = itemView.findViewById(R.id.task_status)
         val taskTime: TextView = itemView.findViewById(R.id.task_time)
     }
 
@@ -28,11 +27,10 @@ class TaskAdapter(
         val task = tasks[position]
         holder.taskTitle.text = task.title
         holder.taskDescription.text = task.description
-        holder.taskStatus.text = if (task.isCompleted) "Выполнена" else "Не выполнена"
-        holder.taskTime.text = task.time
+        holder.taskTime.text = task.dueTime // Используем поле dueTime
 
         holder.itemView.setOnClickListener {
-            onTaskClick(task) // Вызываем функцию при клике
+            onTaskClick(task) // Обрабатываем клик по задаче
         }
     }
 

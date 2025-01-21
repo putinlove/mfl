@@ -4,36 +4,53 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:padding="16dp"
+    android:gravity="center">
 
+    <!-- Кнопки для выбора роли -->
+    <Button
+        android:id="@+id/parent_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Родитель"
+        android:layout_marginBottom="8dp"/>
+
+    <Button
+        android:id="@+id/child_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Ребенок"
+        android:layout_marginBottom="16dp"/>
+
+    <!-- Поля ввода, которые будут скрыты до выбора роли -->
     <EditText
         android:id="@+id/name_input"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Введите имя" />
+        android:hint="Введите имя"
+        android:visibility="gone" />
 
     <EditText
         android:id="@+id/surname_input"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Введите фамилию" />
+        android:hint="Введите фамилию"
+        android:visibility="gone" />
 
-    <Spinner
-        android:id="@+id/role_spinner"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
 
     <EditText
         android:id="@+id/phone_input"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Введите номер телефона" />
+        android:hint="Введите номер телефона"
+        android:visibility="gone" />
 
     <Button
         android:id="@+id/send_code_button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Отправить код" />
+        android:text="Отправить код"
+        android:visibility="gone" />
 
     <EditText
         android:id="@+id/code_input"

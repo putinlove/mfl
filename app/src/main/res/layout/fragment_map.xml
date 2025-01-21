@@ -25,7 +25,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         android:layout_marginTop="16dp"
-        android:layout_marginEnd="16dp"/>
+        android:layout_marginEnd="16dp" />
 
     <!-- Текст для отображения информации о текущем местоположении -->
     <TextView
@@ -39,45 +39,58 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="16dp"/>
+        android:layout_marginTop="16dp" />
 
     <!-- Кнопка для создания геозоны -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fab_create_geofence"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
-        android:layout_marginEnd="16dp"
-        android:contentDescription="Create Geofence"
-        android:src="@android:drawable/ic_menu_add"
-        android:tint="@android:color/white"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        android:layout_marginBottom="72dp"
+    android:layout_marginEnd="16dp"
+    android:contentDescription="Create Geofence"
+    android:src="@android:drawable/ic_menu_add"
+    android:tint="@android:color/white"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintEnd_toEndOf="parent" />
 
     <!-- Кнопка для просмотра геозон -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fab_view_geofences"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="72dp"
-        android:layout_marginEnd="16dp"
-        android:contentDescription="View Geofences"
-        android:src="@android:drawable/ic_menu_view"
-        android:tint="@android:color/white"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        android:layout_marginBottom="128dp"
+    android:layout_marginEnd="16dp"
+    android:contentDescription="View Geofences"
+    android:src="@android:drawable/ic_menu_view"
+    android:tint="@android:color/white"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintEnd_toEndOf="parent" />
 
     <!-- Кнопка для обновления местоположения -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fabUpdateLocation"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="128dp"
-        android:layout_marginEnd="16dp"
-        android:contentDescription="Обновить местоположение"
-        android:src="@android:drawable/ic_menu_mylocation"
-        android:tint="@android:color/white"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        android:layout_marginBottom="184dp"
+    android:layout_marginEnd="16dp"
+    android:contentDescription="Обновить местоположение"
+    android:src="@android:drawable/ic_menu_mylocation"
+    android:tint="@android:color/white"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Кнопка для отображения списка геозон -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fab_geofence_list"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="240dp"
+    android:layout_marginEnd="16dp"
+    android:contentDescription="Список геозон"
+    android:src="@android:drawable/ic_menu_sort_by_size"
+    android:tint="@android:color/white"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintEnd_toEndOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

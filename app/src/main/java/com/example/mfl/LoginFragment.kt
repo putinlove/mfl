@@ -6,6 +6,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.example.mfl.databinding.FragmentLoginBinding
 import com.google.firebase.auth.FirebaseAuth
@@ -123,13 +124,37 @@ class LoginFragment : Fragment() {
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     Log.d("LoginFragment", "Пользователь успешно вошел")
-                    navigateToMap()
+
+                    // Проверка, есть ли пользователь в базе данных Firestore
+                    checkUserInFirestore()
                 } else {
                     Log.d("LoginFragment", "Ошибка при подтверждении кода")
                     binding.codeInput.error = "Неверный код"
                 }
             }
     }
+
+    private fun checkUserInFirestore() {
+        val db = FirebaseFirestore.getInstance()
+        val currentUser = auth.currentUser
+
+        currentUser?.let { user ->
+            db.collection("users").document(user.uid).get()
+                .addOnSuccessListener { document ->
+                    if (document.exists()) {
+                        Log.d("LoginFragment", "Пользователь существует в Firestore")
+                        navigateToMap()
+                    } else {
+                        // Если пользователь не найден в базе данных
+                        Toast.makeText(requireContext(), "Пользователь не зарегистрирован", Toast.LENGTH_SHORT).show()
+                    }
+                }
+                .addOnFailureListener { e ->
+                    Log.d("LoginFragment", "Ошибка при проверке пользователя в Firestore: ${e.message}")
+                }
+        }
+    }
+
 
     private fun navigateToMap() {
         parentFragmentManager.beginTransaction()

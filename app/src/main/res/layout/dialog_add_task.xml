@@ -9,17 +9,30 @@
         android:id="@+id/editTextTaskTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Название задачи" />
+        android:hint="Название задачи"
+        android:inputType="text" />
 
     <EditText
         android:id="@+id/editTextTaskDescription"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Описание задачи" />
+        android:hint="Описание задачи"
+        android:inputType="text" />
 
-    <CheckBox
-        android:id="@+id/checkBoxTaskStatus"
-        android:layout_width="wrap_content"
+    <EditText
+        android:id="@+id/editTextTaskDueTime"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Выполнена" />
+        android:hint="Время выполнения"
+        android:focusable="false"
+        android:inputType="time" />
+
+    <!-- Кнопка удаления задачи, которая будет видна, если задача существует -->
+    <Button
+        android:id="@+id/buttonDeleteTask"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Удалить задачу"
+        android:visibility="gone" />
+
 </LinearLayout>

@@ -26,6 +26,7 @@ import com.yandex.mapkit.map.Map
 import com.yandex.mapkit.mapview.MapView
 import com.yandex.runtime.image.ImageProvider
 
+@Suppress("UNREACHABLE_CODE")
 class MapFragment : Fragment() {
 
     private var _binding: FragmentMapBinding? = null
@@ -174,7 +175,7 @@ class MapFragment : Fragment() {
 
     private fun toggleGeofenceCreation() {
         isCreatingGeofence = if (isCreatingGeofence) {
-            saveGeofence()
+            //saveGeofence()
             false
         } else {
             Toast.makeText(requireContext(), "Режим создания геозоны активирован", Toast.LENGTH_SHORT).show()
@@ -201,9 +202,13 @@ class MapFragment : Fragment() {
     private fun saveGeofence() {
         if (geofencePoints.size >= 3) {
             val newGeofence = Geofence(
-                id = geofenceIdCounter++,
-                points = geofencePoints.toList(),
-                name = "Геозона $geofenceIdCounter"
+                id = TODO(),
+                childId = TODO(),
+                parentId = TODO(),
+                points = TODO(),
+                name = TODO(),
+                latitude = TODO(),
+                longitude = TODO()
             )
             geofences.add(newGeofence)
             database.child(newGeofence.id.toString()).setValue(newGeofence)

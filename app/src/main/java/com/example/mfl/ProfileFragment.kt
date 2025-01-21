@@ -1,17 +1,19 @@
 package com.example.mfl
 
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.AdapterView
-import android.widget.ArrayAdapter
-import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.example.mfl.databinding.FragmentProfileBinding
-import com.example.mfl.model.UserProfile
+import com.example.mfl.model.User
+import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.GeoPoint
 
 class ProfileFragment : Fragment() {
 
@@ -20,103 +22,134 @@ class ProfileFragment : Fragment() {
     private lateinit var auth: FirebaseAuth
     private lateinit var firestore: FirebaseFirestore
 
-    private var selectedRole: String = "Родитель" // Значение по умолчанию
+    private var isDataChanged = false // Флаг для отслеживания изменений
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        // Инициализация ViewBinding
+        Log.d("ProfileFragment", "onCreateView вызван")
         _binding = FragmentProfileBinding.inflate(inflater, container, false)
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        Log.d("ProfileFragment", "onViewCreated вызван")
 
         // Инициализация Firebase
         auth = FirebaseAuth.getInstance()
         firestore = FirebaseFirestore.getInstance()
 
-        // Инициализация спиннера
-        val roles = resources.getStringArray(R.array.roles_array)
-        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, roles)
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        binding.spinnerRole.adapter = adapter
-
-        // Обработка выбора роли
-        binding.spinnerRole.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                selectedRole = roles[position]
-            }
-
-            override fun onNothingSelected(parent: AdapterView<*>?) {}
-        }
-
         // Логика загрузки данных профиля
         loadUserProfile()
 
+        // Добавляем TextWatcher для отслеживания изменений
+        binding.editTextName.addTextChangedListener(createTextWatcher())
+        binding.editTextPhone.addTextChangedListener(createTextWatcher())
+
         // Логика для кнопки сохранения
         binding.buttonSave.setOnClickListener {
+            Log.d("ProfileFragment", "Кнопка сохранения нажата")
             saveUserProfile()
         }
     }
 
     private fun loadUserProfile() {
         val currentUser = auth.currentUser
-        currentUser?.let {
-            val userId = it.uid
-            firestore.collection("users").document(userId).get()
-                .addOnSuccessListener { document ->
-                    if (document != null) {
-                        val userProfile = document.toObject(UserProfile::class.java)
-                        userProfile?.let { profile ->
-                            binding.editTextName.setText(profile.firstName)
-                            binding.editTextPhone.setText(profile.phoneNumber)
-                            // Установить роль в спиннере
-                            val roleIndex = resources.getStringArray(R.array.roles_array).indexOf(profile.role)
-                            binding.spinnerRole.setSelection(roleIndex)
-                        }
+        if (currentUser == null) {
+            showSnackbar("Пользователь не найден")
+            Log.d("ProfileFragment", "Текущий пользователь не найден")
+            return
+        }
+
+        val userId = currentUser.uid
+        firestore.collection("users").document(userId).get()
+            .addOnSuccessListener { document ->
+                if (document != null) {
+                    val user = document.toObject(User::class.java)
+                    if (user != null) {
+                        binding.editTextName.setText(user.firstName)
+                        binding.editTextPhone.setText(user.phoneNumber)
+                        isDataChanged = false // Сбрасываем флаг при загрузке данных
+                        Log.d("ProfileFragment", "Данные профиля загружены: ${user.firstName}, ${user.phoneNumber}")
                     } else {
-                        Toast.makeText(requireContext(), "Профиль не найден", Toast.LENGTH_SHORT).show()
+                        showSnackbar("Профиль не найден. Пожалуйста, заполните поля.")
+                        Log.d("ProfileFragment", "Документ профиля пуст")
                     }
                 }
-                .addOnFailureListener { e ->
-                    Toast.makeText(requireContext(), "Ошибка загрузки профиля: ${e.message}", Toast.LENGTH_SHORT).show()
-                }
-        }
+            }
+            .addOnFailureListener { e ->
+                showSnackbar("Ошибка загрузки профиля: ${e.message}")
+                Log.d("ProfileFragment", "Ошибка загрузки профиля: ${e.message}")
+            }
     }
 
     private fun saveUserProfile() {
         val currentUser = auth.currentUser
-        currentUser?.let {
-            val userId = it.uid
-            val name = binding.editTextName.text.toString()
-            val phone = binding.editTextPhone.text.toString()
+        if (currentUser == null) {
+            showSnackbar("Пользователь не найден")
+            Log.d("ProfileFragment", "Текущий пользователь не найден")
+            return
+        }
 
-            if (name.isEmpty() || phone.isEmpty()) {
-                Toast.makeText(requireContext(), "Заполните все поля", Toast.LENGTH_SHORT).show()
-            } else {
-                val userProfile = UserProfile(
-                    id = userId,
-                    firstName = name,
-                    phoneNumber = phone,
-                    role = selectedRole
-                )
+        val userId = currentUser.uid
+        val firstName = binding.editTextName.text.toString().trim()
+        val phone = binding.editTextPhone.text.toString().trim()
 
-                firestore.collection("users").document(userId).set(userProfile)
-                    .addOnSuccessListener {
-                        Toast.makeText(requireContext(), "Данные успешно сохранены", Toast.LENGTH_SHORT).show()
-                    }
-                    .addOnFailureListener { e ->
-                        Toast.makeText(requireContext(), "Ошибка сохранения данных: ${e.message}", Toast.LENGTH_SHORT).show()
-                    }
+        if (firstName.isEmpty() || phone.isEmpty()) {
+            showSnackbar("Заполните все поля перед сохранением")
+            Log.d("ProfileFragment", "Некоторые поля пустые")
+            return
+        }
+
+        val user = User(
+            id = userId,
+            firstName = firstName,
+            lastName = "",  // Можно добавить поле для фамилии в UI и тут
+            phoneNumber = phone,
+            role = "", // Нужно добавить логику для роли, если это необходимо
+            location = GeoPoint(0.0, 0.0) // Добавьте логику для получения геопозиции
+        )
+
+        firestore.collection("users").document(userId).set(user)
+            .addOnSuccessListener {
+                if (isDataChanged) {
+                    showSnackbar("Данные успешно сохранены")
+                    isDataChanged = false // Сбрасываем флаг после успешного сохранения
+                }
+                Log.d("ProfileFragment", "Данные профиля сохранены успешно")
             }
+            .addOnFailureListener { e ->
+                showSnackbar("Ошибка сохранения данных: ${e.message}")
+                Log.d("ProfileFragment", "Ошибка сохранения данных: ${e.message}")
+            }
+    }
+
+    private fun createTextWatcher(): TextWatcher {
+        return object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                isDataChanged = true // Устанавливаем флаг при изменении текста
+            }
+
+            override fun afterTextChanged(s: Editable?) {}
+        }
+    }
+
+    private fun showSnackbar(message: String) {
+        if (isAdded && view != null) {
+            Snackbar.make(requireView(), message, Snackbar.LENGTH_SHORT).show()
+            Log.d("ProfileFragment", "Snackbar показан: $message")
+        } else {
+            Log.d("ProfileFragment", "Snackbar не может быть показан: $message")
         }
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null // Освобождение ресурсов binding
+        Log.d("ProfileFragment", "onDestroyView вызван")
     }
 }

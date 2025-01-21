@@ -14,7 +14,8 @@ android {
     defaultConfig {
         applicationId = "com.example.mfl"
         minSdk = 26
-        targetSdk = 34
+        //noinspection OldTargetApi
+        targetSdk = 33
         versionCode = 1
         versionName = "1.0"
 
@@ -50,6 +51,7 @@ android {
 }
 
 dependencies {
+    implementation(libs.androidx.cardview)
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth.ktx)
     implementation(libs.firebase.firestore.ktx)

@@ -23,9 +23,9 @@ class UserFragment : Fragment() {
         _binding = FragmentUserBinding.inflate(inflater, container, false)
 
         // Пример пользователей
-        userList.add(User(id = "1", name = "Иван Иванов"))
-        userList.add(User(id = "2", name = "Мария Петрова"))
-        userList.add(User(id = "3", name = "Александр Смирнов"))
+        userList.add(User(id = "1", firstName = "Иван Иванов"))
+        userList.add(User(id = "2", firstName = "Мария Петрова"))
+        userList.add(User(id = "3", firstName = "Александр Смирнов"))
 
         // Настройка RecyclerView
         adapter = UserAdapter(userList) { user ->

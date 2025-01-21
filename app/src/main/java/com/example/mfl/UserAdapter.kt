@@ -25,7 +25,7 @@ class UserAdapter(private val users: List<User>, private val onUserClick: (User)
 
     class UserViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         fun bind(user: User, onUserClick: (User) -> Unit) {
-            itemView.findViewById<TextView>(R.id.textViewUserName).text = user.name
+            itemView.findViewById<TextView>(R.id.textViewUserName).text = user.firstName
             itemView.setOnClickListener { onUserClick(user) }
         }
     }

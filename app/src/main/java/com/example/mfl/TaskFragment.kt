@@ -1,8 +1,8 @@
+import android.app.TimePickerDialog
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
@@ -11,17 +11,22 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.mfl.R
 import com.example.mfl.databinding.FragmentTaskBinding
 import com.example.mfl.model.Task
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ktx.toObject
+import java.util.Calendar
 import java.util.UUID
 
 class TaskFragment : Fragment() {
 
     private var _binding: FragmentTaskBinding? = null
     private val binding get() = _binding!!
-
     private lateinit var taskAdapter: TaskAdapter
-    private val tasks: MutableList<Task> = mutableListOf() // Список задач
-    private val db = FirebaseFirestore.getInstance() // Инициализация Firestore
+    private val tasks: MutableList<Task> = mutableListOf()
+    private val db = FirebaseFirestore.getInstance()
+    private var isParent: Boolean = false
+    private var userRole: String = "parent"  // Временно задаем роль как "parent"
+    private val auth = FirebaseAuth.getInstance() // Инициализация FirebaseAuth
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -34,18 +39,32 @@ class TaskFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Настройка RecyclerView
-        taskAdapter = TaskAdapter(tasks) { task -> showAddTaskDialog(task) }
+        loadUserRoleFromFirebase()
+
+        taskAdapter = TaskAdapter(tasks) { task ->
+            if (isParent) {
+                showAddTaskDialog(task)
+            } else {
+                Toast.makeText(requireContext(), "У вас нет прав для редактирования", Toast.LENGTH_SHORT).show()
+            }
+        }
         binding.recyclerViewTasks.layoutManager = LinearLayoutManager(requireContext())
         binding.recyclerViewTasks.adapter = taskAdapter
 
-        // Загрузка задач из Firebase
-        loadTasksFromFirebase()
-
-        // Кнопка добавления задачи
         binding.buttonAddTask.setOnClickListener {
             showAddTaskDialog()
         }
+    }
+
+    private fun loadUserRoleFromFirebase() {
+        // Временно устанавливаем роль как "parent" для тестирования
+        userRole = "parent"  // Hardcode роль "parent"
+        isParent = (userRole == "parent")
+
+        // Теперь кнопка будет отображаться, если роль пользователя родитель
+        binding.buttonAddTask.visibility = if (isParent) View.VISIBLE else View.GONE
+
+        loadTasksFromFirebase()
     }
 
     private fun loadTasksFromFirebase() {
@@ -55,7 +74,7 @@ class TaskFragment : Fragment() {
                 val task = document.toObject(Task::class.java)
                 tasks.add(task)
             }
-            taskAdapter.notifyDataSetChanged() // Обновляем список задач
+            taskAdapter.notifyDataSetChanged()
         }.addOnFailureListener {
             Toast.makeText(requireContext(), "Ошибка загрузки задач", Toast.LENGTH_SHORT).show()
         }
@@ -65,13 +84,20 @@ class TaskFragment : Fragment() {
         val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_add_task, null)
         val titleInput: EditText = dialogView.findViewById(R.id.editTextTaskTitle)
         val descriptionInput: EditText = dialogView.findViewById(R.id.editTextTaskDescription)
-        val statusCheckbox: CheckBox = dialogView.findViewById(R.id.checkBoxTaskStatus)
+        val dueTimeInput: EditText = dialogView.findViewById(R.id.editTextTaskDueTime)
 
-        // Если редактируем задачу, заполняем поля
         if (task != null) {
             titleInput.setText(task.title)
             descriptionInput.setText(task.description)
-            statusCheckbox.isChecked = task.isCompleted
+            dueTimeInput.setText(task.dueTime)
+        }
+
+        dueTimeInput.setOnClickListener {
+            val calendar = Calendar.getInstance()
+            val timePicker = TimePickerDialog(requireContext(), { _, hour, minute ->
+                dueTimeInput.setText(String.format("%02d:%02d", hour, minute))
+            }, calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), true)
+            timePicker.show()
         }
 
         val dialogBuilder = AlertDialog.Builder(requireContext())
@@ -80,18 +106,16 @@ class TaskFragment : Fragment() {
             .setPositiveButton(if (task == null) "Добавить" else "Сохранить") { _, _ ->
                 val title = titleInput.text.toString()
                 val description = descriptionInput.text.toString()
-                val isCompleted = statusCheckbox.isChecked
+                val dueTime = dueTimeInput.text.toString()
 
-                if (title.isNotEmpty() && description.isNotEmpty()) {
+                if (title.isNotEmpty() && description.isNotEmpty() && dueTime.isNotEmpty()) {
                     if (task == null) {
-                        // Добавляем новую задачу
-                        val newTask = Task(UUID.randomUUID().toString(), title, description, isCompleted, "00:00")
+                        val newTask = Task(UUID.randomUUID().toString(), title, description, dueTime)
                         saveTaskToFirebase(newTask)
                     } else {
-                        // Обновляем существующую задачу
                         task.title = title
                         task.description = description
-                        task.isCompleted = isCompleted
+                        task.dueTime = dueTime
                         updateTaskInFirebase(task)
                     }
                 } else {
@@ -99,6 +123,13 @@ class TaskFragment : Fragment() {
                 }
             }
             .setNegativeButton("Отмена", null)
+
+        // Добавляем кнопку удаления задачи, если задача существует (редактирование)
+        if (task != null) {
+            dialogBuilder.setNeutralButton("Удалить") { _, _ ->
+                deleteTaskFromFirebase(task)
+            }
+        }
 
         dialogBuilder.create().show()
     }
@@ -118,7 +149,7 @@ class TaskFragment : Fragment() {
     private fun updateTaskInFirebase(task: Task) {
         db.collection("tasks").document(task.id).set(task)
             .addOnSuccessListener {
-                taskAdapter.notifyDataSetChanged() // Обновляем весь список
+                taskAdapter.notifyDataSetChanged()
                 Toast.makeText(requireContext(), "Задача обновлена", Toast.LENGTH_SHORT).show()
             }
             .addOnFailureListener {
@@ -126,8 +157,21 @@ class TaskFragment : Fragment() {
             }
     }
 
+    private fun deleteTaskFromFirebase(task: Task) {
+        db.collection("tasks").document(task.id).delete()
+            .addOnSuccessListener {
+                tasks.remove(task)
+                taskAdapter.notifyDataSetChanged()
+                Toast.makeText(requireContext(), "Задача удалена", Toast.LENGTH_SHORT).show()
+            }
+            .addOnFailureListener {
+                Toast.makeText(requireContext(), "Ошибка удаления задачи", Toast.LENGTH_SHORT).show()
+            }
+    }
+
     override fun onDestroyView() {
         super.onDestroyView()
-        _binding = null // Освобождение ресурсов binding
+        _binding = null
     }
 }
+

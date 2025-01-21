@@ -1,6 +1,5 @@
 package com.example.mfl
 
-
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -9,13 +8,15 @@ import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import androidx.fragment.app.Fragment
 import com.example.mfl.databinding.FragmentRegistrationBinding
-import com.example.mfl.model.UserProfile
+import com.example.mfl.model.User
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.PhoneAuthOptions
 import com.google.firebase.auth.PhoneAuthCredential
 import com.google.firebase.auth.PhoneAuthProvider
 import com.google.firebase.FirebaseException
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.GeoPoint
+import com.google.firebase.auth.FirebaseUser
 import java.util.concurrent.TimeUnit
 
 class RegistrationFragment : Fragment() {
@@ -43,7 +44,15 @@ class RegistrationFragment : Fragment() {
         // Настройка выбора роли
         val roles = arrayOf("Родитель", "Ребенок")
         val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, roles)
-        binding.roleSpinner.adapter = adapter
+
+        // Обработчики для выбора роли
+        binding.parentButton.setOnClickListener {
+            showInputFields("Родитель")
+        }
+
+        binding.childButton.setOnClickListener {
+            showInputFields("Ребенок")
+        }
 
         binding.sendCodeButton.setOnClickListener {
             val phoneNumber = binding.phoneInput.text.toString().trim()
@@ -63,6 +72,21 @@ class RegistrationFragment : Fragment() {
                 binding.codeInput.error = "Введите код"
             }
         }
+    }
+
+    // Функция для показа полей ввода в зависимости от роли
+    private fun showInputFields(role: String) {
+        binding.parentButton.visibility = View.GONE
+        binding.childButton.visibility = View.GONE
+
+        binding.nameInput.visibility = View.VISIBLE
+        binding.surnameInput.visibility = View.VISIBLE
+
+        binding.phoneInput.visibility = View.VISIBLE
+        binding.sendCodeButton.visibility = View.VISIBLE
+
+        // Можно использовать роль для дополнительных действий, если нужно
+        Log.d("RegistrationFragment", "Выбрана роль: $role")
     }
 
     // Валидация номера телефона
@@ -137,16 +161,19 @@ class RegistrationFragment : Fragment() {
         val phoneNumber = user?.phoneNumber
         val firstName = binding.nameInput.text.toString().trim() // Получите значение имени
         val lastName = binding.surnameInput.text.toString().trim()   // Получите значение фамилии
-        val role = binding.roleSpinner.selectedItem.toString() // Получите выбранную роль
+        val role = if (binding.parentButton.isSelected) "Родитель" else "Ребенок"
 
         if (phoneNumber != null) {
             val db = FirebaseFirestore.getInstance()
-            val userData = UserProfile(
+            val location = GeoPoint(0.0, 0.0) // Можно заменить на текущее местоположение
+
+            val userData = User(
                 id = user.uid,
-                phoneNumber = phoneNumber,
                 firstName = firstName,
                 lastName = lastName,
-                role = role
+                phoneNumber = phoneNumber,
+                role = role,
+                location = location
             )
 
             db.collection("users").document(user.uid)
@@ -161,7 +188,6 @@ class RegistrationFragment : Fragment() {
                 }
         }
     }
-
 
     // Переход на главный экран
     private fun navigateToMainScreen() {
